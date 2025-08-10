@@ -37,8 +37,15 @@ WebServer server(80);
 #define TILT_SERVO_PIN    16
 
 #ifdef USE_ESC_CONTROL
+<<<<<<< ours
   #define LEFT_ESC_PIN    14   // Safe, no boot or SD conflict   // Moved from 13 to avoid SD conflict
   #define RIGHT_ESC_PIN   13   // Safe, no boot or SD conflict   // Moved from 15 to avoid SD conflict
+  #define LEFT_ESC_CHANNEL  1
+  #define RIGHT_ESC_CHANNEL 2
+=======
+  #define LEFT_ESC_PIN    12   // Free GPIO; not used by camera or SD interface
+  #define RIGHT_ESC_PIN   15   // Free GPIO; not used by camera or SD interface
+>>>>>>> theirs
 #endif
 
 Servo panServo;
@@ -75,10 +82,12 @@ void setup() {
 
 #ifdef USE_ESC_CONTROL
   Serial.println("Initializing ESC Motor Control...");
-  ledcAttach(LEFT_ESC_PIN, 50, 16);
-  ledcAttach(RIGHT_ESC_PIN, 50, 16);  // New pin assignment safe for SD
-  ledcWrite(LEFT_ESC_PIN, 4915);
-  ledcWrite(RIGHT_ESC_PIN, 4915);
+  ledcSetup(LEFT_ESC_CHANNEL, 50, 16);            // timer 1
+  ledcAttachPin(LEFT_ESC_PIN, LEFT_ESC_CHANNEL);
+  ledcSetup(RIGHT_ESC_CHANNEL, 50, 16);           // timer 2
+  ledcAttachPin(RIGHT_ESC_PIN, RIGHT_ESC_CHANNEL);
+  ledcWrite(LEFT_ESC_CHANNEL, 4915);
+  ledcWrite(RIGHT_ESC_CHANNEL, 4915);
   delay(3000);  // ESC arm delay
   Serial.println("ESCs ready!");
 #endif
@@ -97,7 +106,7 @@ void setup() {
   }
 
   delay(500);  // Stabilize before camera init
-  camera_config_t config;
+  camera_config_t config = {};
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
   config.pin_d0 = Y2_GPIO_NUM;
@@ -122,6 +131,9 @@ void setup() {
   config.jpeg_quality = 20;             // Reduced quality
   config.fb_count = 2;
   config.fb_location = CAMERA_FB_IN_DRAM;  // Use internal DRAM instead of PSRAM
+  config.grab_mode = CAMERA_GRAB_LATEST;
+  config.sccb_i2c_port = 0;
+  config.sccb_i2c_freq = 100000;
 
   Serial.println("Init camera...");
   if (esp_camera_init(&config) != ESP_OK) {
